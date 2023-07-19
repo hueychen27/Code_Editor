@@ -5,25 +5,119 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code IDE</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/vs2015.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js" defer></script>
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/vs2015.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js" defer></script> -->
     <style>
-        code {
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #editor {
             white-space: pre-wrap;
+            min-width: 20vh;
+            width: 100%;
+            height: 50%;
         }
 
         #iframe {
             border: 1px solid black;
+            width: calc(100% - 2px);
+            height: max-content;
+        }
+
+        #downloadThing {
+            display: flex;
+            margin: 10px;
+        }
+
+        #fileName {
+            padding: 10px;
+            border-radius: 10px;
         }
     </style>
 </head>
 
 <body>
-    <pre><code id="editor" class="language-html code editor" spellcheck="false" contenteditable="true"></code></pre>
-    <div id="iframe">
+    <section id="downloadThing">
+        <input type="text" value="index" id="fileName">
+        <button id="download">Download</button>
+    </section>
+    <div id="editor"></div>
+    <iframe id="iframe" sandbox="allow-modals allow-same-origin">
 
-    </div>
-    <script src="index.js" type="module" defer></script>
+    </iframe>
+    <script src="./node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script>
+        // Credits: https://stackoverflow.com/a/34064434/15055490
+        function htmlDecode(input) {
+            var doc = new DOMParser().parseFromString(input, "text/html");
+            return doc.documentElement.textContent;
+        }
+
+        // Credits: https://stackoverflow.com/a/30832210/15055490
+        function download(data, filename, type) {
+            var file = new Blob([data], { type: type });
+            if (window.navigator.msSaveOrOpenBlob)
+                window.navigator.msSaveOrOpenBlob(file, filename);
+            else {
+                var a = document.createElement("a"),
+                    url = URL.createObjectURL(file);
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function () {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 0);
+            }
+        }
+
+        let editor;
+        const iframe = document.getElementById("iframe").contentWindow.document;
+        function update() {
+            iframe.open()
+            var value = editor.getValue();
+            iframe.writeln(value)
+            iframe.close()
+        }
+        const val = `&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+        &lt;meta charset=&quot;UTF-8&quot;&gt;
+        &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+        &lt;title&gt;Document&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;h1&gt;Hello World!&lt;/h1&gt;
+    &lt;/body&gt;
+&lt;/html&gt;`
+        require.config({ paths: { vs: './node_modules/monaco-editor/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: htmlDecode(val),
+                theme: "vs-dark",
+                language: 'html'
+            })
+            update();
+        })
+        document.onkeyup = () => {
+            update();
+        }
+        document.addEventListener("keydown", (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+                e.preventDefault();
+                download(editor.getValue(), document.getElementById("fileName").value, "text/html");
+            }
+        })
+        document.getElementById("download").addEventListener("click", () => {
+            download(editor.getValue(), document.getElementById("fileName").value, "text/html");
+        })
+    </script>
 </body>
 
 </html>
