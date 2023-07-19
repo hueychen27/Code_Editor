@@ -26,12 +26,12 @@
         #iframe {
             border: 1px solid black;
             width: calc(100% - 2px);
-            height: max-content;
         }
 
         #downloadThing {
-            display: flex;
+            display: inline-flex;
             margin: 10px;
+            justify-content: space-between;
         }
 
         #fileName {
@@ -43,13 +43,14 @@
 
 <body>
     <section id="downloadThing">
-        <input type="text" value="index" id="fileName">
+        <label>
+            File name:
+            <input type="text" value="index" id="fileName">.html
+        </label>
         <button id="download">Download</button>
     </section>
     <div id="editor"></div>
-    <iframe id="iframe" sandbox="allow-modals allow-same-origin">
-
-    </iframe>
+    <iframe id="iframe"></iframe>
     <script src="./node_modules/monaco-editor/min/vs/loader.js"></script>
     <script>
         // Credits: https://stackoverflow.com/a/34064434/15055490
